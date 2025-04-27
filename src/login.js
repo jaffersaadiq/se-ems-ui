@@ -7,13 +7,37 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (username === 'admin' && password === 'password') {
-      navigate('/Dashboard');
-    } else {
-      alert('Invalid username or password');
+    try {
+      const response = await fetch('http://localhost:8080/se-ems/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        
+        body: JSON.stringify({ 
+          "email":username,
+          "password":password
+         }),
+      });
+      
+      if (response.ok) {
+        const data =   response.json();
+        localStorage.setItem("token", data.token);
+        navigate('/Dashboard');
+        // Handle successful response
+      } else {
+        alert('Invalid username or password');
+        console.error('API Error:', response.status);
+        // Handle error response
+      }
+    } catch (error) {
+      console.error('API Error:', error);
+      
+      // Handle network or other errors
     }
+    
   };
 
   return (
@@ -59,7 +83,7 @@ const Login = () => {
         <div className="additional-options">
           <a href="#forgot" className="forgot-password">Forgot Password?</a>
           <p className="signup-link">
-            New user? <a href="#signup">Create account</a>
+            New user? <a href="Registration">Create account</a>
           </p>
         </div>
       </div>

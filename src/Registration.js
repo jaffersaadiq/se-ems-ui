@@ -34,13 +34,40 @@ const Registration = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
-      // Submit form logic here
-      alert('Registration successful!');
-      navigate('/login');
-    }
+      try {
+        const response = await fetch('http://localhost:8080/se-ems/user/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          
+          body: JSON.stringify({ 
+            "fullName":formData.fullName,
+            "phoneNumber":formData.phone,
+            "email":formData.email,
+            "password":formData.password
+           }),
+        });
+        if (response.ok) {
+          navigate('/');
+          // Handle successful response
+        } else {
+          alert('Registration Error!');
+          console.error('API Error:', response.status);
+          // Handle error response
+        }
+
+      } catch (error) {
+        console.error('API Error:', error);
+        // Handle network or other errors
+      }
+
+      
+    };
+      
   };
 
   return (
