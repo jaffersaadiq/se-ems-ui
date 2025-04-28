@@ -1,137 +1,205 @@
 .modal-content {
-    background: white;
-    border-radius: 20px;
-    width: 100%;
-    max-width: 700px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-    position: relative;
-    animation: fadeIn 0.4s ease;
+  background: white;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 700px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  position: relative;
+  animation: fadeIn 0.4s ease;
+}
+ 
+.registration-box {
+  padding: 2rem 3rem;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-height: 80vh;           /* Limit height for popup effect */
+  overflow-y: auto;
+}
+ 
+.registration-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-bottom: 1px solid #eee;
+}
+ 
+.auth-header {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+ 
+.ems-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 2.2rem;
+  color: #e94560;
+}
+ 
+.ems-title {
+  color: #1a1a2e;
+  font-size: 2rem;
+  font-weight: bold;
+}
+ 
+.tagline {
+  font-size: 0.95rem;
+  color: #666;
+  margin-top: 0.2rem;
+}
+ 
+.registration-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+ 
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+ 
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: #333;
+}
+ 
+.form-group input {
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  border: 1.5px solid #ddd;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+ 
+.form-group input:focus {
+  border-color: #e94560;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.2);
+}
+ 
+.register-button {
+  background-color: #e94560;
+  color: white;
+  font-weight: 600;
+  padding: 1rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+ 
+.register-button:hover {
+  background-color: #d63a53;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(233, 69, 96, 0.3);
+}
+ 
+.close-modal {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 1.4rem;
+  background: transparent;
+  border: none;
+  color: #444;
+  cursor: pointer;
+}
+ 
+.login-link {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #555;
+}
+ 
+.login-link a {
+  color: #e94560;
+  font-weight: 500;
+  text-decoration: none;
+}
+ 
+.login-link a:hover {
+  text-decoration: underline;
+}
+ 
+/* ----------- Additional Styles ----------- */
+ 
+/* User-Doctor Toggle Buttons */
+.user-type-selector {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+ 
+.type-btn {
+  padding: 8px 16px;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.2s;
+}
+ 
+.type-btn.active,
+.type-btn:hover {
+  background-color: #e94560;
+  color: white;
+  box-shadow: 0 4px 12px rgba(233, 69, 96, 0.3);
+}
+ 
+/* Back Button */
+.navigation-buttons {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 1rem;
+}
+ 
+.back-button {
+  background-color: #ddd;
+  color: #333;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+ 
+.back-button:hover {
+  background-color: #ccc;
+  transform: translateY(-2px);
+}
+ 
+/* Error Messages and Inputs */
+.error-message {
+  color: #e94560;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+ 
+.error-input {
+  border-color: #e94560 !important;
+  box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.2) !important;
+}
+ 
+/* Fade-In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
   }
-  
-  .registration-box {
-    padding: 2rem 3rem;
-    background: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
-  
-  .registration-image {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .auth-header {
-    text-align: center;
-    margin: 1.5rem 0;
-  }
-  
-  .ems-logo {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.6rem;
-    font-size: 2.2rem;
-    color: #e94560;
-  }
-  
-  .ems-title {
-    color: #1a1a2e;
-    font-size: 2rem;
-    font-weight: bold;
-  }
-  
-  .tagline {
-    font-size: 0.95rem;
-    color: #666;
-    margin-top: 0.2rem;
-  }
-  
-  .registration-form {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
-  }
-  
-  .form-group {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .form-group label {
-    font-weight: 600;
-    margin-bottom: 0.4rem;
-    color: #333;
-  }
-  
-  .form-group input {
-    padding: 0.8rem 1rem;
-    border-radius: 8px;
-    border: 1.5px solid #ddd;
-    font-size: 1rem;
-    transition: border-color 0.3s;
-  }
-  
-  .form-group input:focus {
-    border-color: #e94560;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.2);
-  }
-  
-  .register-button {
-    background-color: #e94560;
-    color: white;
-    font-weight: 600;
-    padding: 1rem;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 1.1rem;
-    transition: background 0.3s ease, transform 0.2s ease;
-  }
-  
-  .register-button:hover {
-    background-color: #d63a53;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 18px rgba(233, 69, 96, 0.3);
-  }
-  
-  .close-modal {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 1.4rem;
-    background: transparent;
-    border: none;
-    color: #444;
-    cursor: pointer;
-  }
-  
-  .login-link {
-    margin-top: 1.5rem;
-    text-align: center;
-    font-size: 0.9rem;
-    color: #555;
-  }
-  
-  .login-link a {
-    color: #e94560;
-    font-weight: 500;
-    text-decoration: none;
-  }
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: scale(0.96);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-  
+}
