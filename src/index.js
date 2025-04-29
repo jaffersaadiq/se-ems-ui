@@ -1,24 +1,27 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import Login from "./login";
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Dashboard from './Dashboard';
-import "./index.css";
-import Frontpage from './frontpage';
+
+import Login from "./login";
+import Dashboard from "./Dashboard";
+import Frontpage from "./frontpage";
 import Registration from "./Registration";
+import DoctorChat from "./DocChat"; // 👈 make sure you import this
+import "./index.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-    
-    <React.StrictMode>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Login />} /> {/* Login page as the default route */}
-          <Route path="/" element={<Frontpage />} /> {/* Frontpage */}
-          <Route path="/dashboard" element={<Dashboard />} /> {/* Dashboard route */}
-          <Route path="/Registration" element={<Registration />} /> {/* Dashboard route */}
-        </Routes>
-      </Router>
-    </React.StrictMode>
-  );
-  
+  <React.StrictMode>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/frontpage" element={<Frontpage />} />
+        <Route path="/docchat" element={<DoctorChat />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/register" element={<Registration />} />
+        {/* Optional fallback */}
+        <Route path="*" element={<div>404 - Page Not Found</div>} />
+      </Routes>
+    </Router>
+  </React.StrictMode>
+);

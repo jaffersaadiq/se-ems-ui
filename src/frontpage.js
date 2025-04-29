@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import io from 'socket.io-client';
 import './Frontpage.css';
+
+const socket = io('http://localhost:5001'); // Make sure backend runs here
+const room = 'hospital123'; // Shared room name
 
 const Frontpage = ({ onGetStarted, saveUserData }) => {
   const [activeTab, setActiveTab] = useState('Instructions');
@@ -36,27 +40,36 @@ const Frontpage = ({ onGetStarted, saveUserData }) => {
     onGetStarted();
   };
 
-  const handleSendMessage = () => {
+  const sendMessage = () => {
     if (inputValue.trim()) {
-      setMessages([...messages, { text: inputValue, sender: 'user' }]);
-      setInputValue('');
-      setTimeout(() => {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            text: 'Thank you for your message! How can I assist you?',
-            sender: 'bot'
-          }
-        ]);
-      }, 1000);
+      socket.emit('sendMessage', { room, text: inputValue, sender: 'patient' });
+      setInputValue(''); // Keep this to clear input
     }
   };
+
+  useEffect(() => {
+    socket.emit('joinRoom', { room });
+
+    socket.on('message', (msg) => {
+      setMessages((prev) => [...prev, msg]);
+    });
+    return () => {
+      socket.off('message');
+    };
+  }, []);
 
   useEffect(() => {
     document.body.classList.toggle('dark-mode', darkMode);
     document.documentElement.classList.toggle('dark-mode', darkMode);
   }, [darkMode]);
 
+  useEffect(() => {
+    const chatWindow = document.querySelector('.chat-window');
+    if (chatWindow) {
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+  }, [messages]);
+  
   return (
     <div className="frontpage">
       {/* 🌙 Dark Mode Toggle */}
@@ -106,24 +119,18 @@ const Frontpage = ({ onGetStarted, saveUserData }) => {
           {activeTab === 'Instructions' && (
             <div className="content">
               <h2>Instructions</h2>
-              <p>
-                Follow these steps to use our Emergency Medical Services:
-                <ol>
-                  <li>Click "Get Started" to access the dashboard.</li>
-                  <li>Use the live chat to connect with a professional.</li>
-                  <li>View nearby hospitals for emergency assistance.</li>
-                </ol>
-              </p>
+              <ol>
+                <li>Click "Get Started" to access the dashboard.</li>
+                <li>Use the live chat to connect with a professional.</li>
+                <li>View nearby hospitals for emergency assistance.</li>
+              </ol>
             </div>
           )}
 
           {activeTab === 'Hospital Record' && (
             <div className="content">
               <h2>Hospital Record</h2>
-              <p>
-                View and manage your hospital records here. This section will
-                display your medical history, appointments, and more.
-              </p>
+              <p>View and manage your hospital records here.</p>
             </div>
           )}
 
@@ -215,9 +222,7 @@ const Frontpage = ({ onGetStarted, saveUserData }) => {
               {hospitalReviews.map((review) => (
                 <div key={review.id} className="review-item">
                   <p>{review.text}</p>
-                  <p>
-                    <strong>Rating:</strong> {review.rating}
-                  </p>
+                  <p><strong>Rating:</strong> {review.rating}</p>
                 </div>
               ))}
             </div>
@@ -229,42 +234,32 @@ const Frontpage = ({ onGetStarted, saveUserData }) => {
       <div className="main-content">
         <div className="card">
           <h2>Live Chat with a Professional</h2>
-          <div className="placeholder">
-            <p>Live chat will appear here.</p>
+          <div className="chat-box">
+            <div className="chat-window">
+              {messages.map((msg, index) => (
+                <div key={index} className={`message ${msg.sender}`}>
+                  <strong>{msg.sender === 'doctor' ? 'Doctor' : 'You'}:</strong> {msg.text}
+                </div>
+              ))}
+            </div>
+            <div className="chat-input">
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Type your message..."
+                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+              />
+              <button onClick={sendMessage}>Send</button>
+            </div>
           </div>
         </div>
+
         <div className="card">
           <h2>Nearby Hospitals</h2>
           <div className="placeholder">
             <p>List of nearby hospitals will appear here.</p>
           </div>
-        </div>
-      </div>
-
-      {/* Chat Interface */}
-      <div className="chat-interface">
-        <h2>Live Chat</h2>
-        <div className="chat-window">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`message ${
-                message.sender === 'user' ? 'user-message' : 'bot-message'
-              }`}
-            >
-              {message.text}
-            </div>
-          ))}
-        </div>
-        <div className="chat-input">
-          <input
-            type="text"
-            placeholder="Type your message..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-          />
-          <button onClick={handleSendMessage}>Send</button>
         </div>
       </div>
     </div>

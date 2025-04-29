@@ -1,0 +1,77 @@
+.chat-box {
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 16px;
+    padding: 1.5rem;
+    max-width: 600px;
+    margin: 2rem auto;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  }
+  
+  .chat-box h2 {
+    margin-top: 0;
+    color: #0a2342;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  
+  .chat-window {
+    height: 220px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 1rem;
+    background: #f9f9f9;
+    margin-bottom: 1rem;
+  }
+  
+  .message {
+    margin-bottom: 0.75rem;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    max-width: 75%;
+    font-size: 0.95rem;
+  }
+  
+  .message.doctor {
+    background-color: #0a2342;
+    color: white;
+    margin-left: auto;
+    text-align: right;
+  }
+  
+  .message.patient {
+    background-color: #e94560;
+    color: white;
+    margin-right: auto;
+    text-align: left;
+  }
+  
+  .chat-input {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .chat-input input {
+    flex: 1;
+    padding: 0.75rem;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+  
+  .chat-input button {
+    background: #0a2342;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    font-weight: bold;
+  }
+  
+  .chat-input button:hover {
+    background: #081c33;
+  }
+  

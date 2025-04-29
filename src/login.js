@@ -1,43 +1,52 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios'; // 👈 Make sure axios is installed
 import './yo.css';
+import Registration from './Registration';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showRegistration, setShowRegistration] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const response = await fetch('http://localhost:8080/se-ems/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        
-        body: JSON.stringify({ 
-          "email":username,
-          "password":password
-         }),
-      });
-      
-      if (response.ok) {
-        const data =   response.json();
+    fetch('http://localhost:8080/se-ems/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        "email": username,
+        "password": password
+      }),
+    })
+      .then(response => {
+        if (!response.ok) {
+          return response.text().then(text => {
+            throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
         localStorage.setItem("token", data.token);
-        navigate('/Dashboard');
-        // Handle successful response
-      } else {
+        // Assuming the user type is directly available in the data object
+        const { type: userType } = data.user;
+        if (userType === 'doctor') {
+          navigate('/DocChat');
+        } else if (userType === 'user') {
+          navigate('/Dashboard');
+        } else {
+          alert('Unknown user type');
+        }
+      })
+      .catch(error => {
+        console.error('Login error:', error);
         alert('Invalid username or password');
-        console.error('API Error:', response.status);
-        // Handle error response
-      }
-    } catch (error) {
-      console.error('API Error:', error);
-      
-      // Handle network or other errors
-    }
-    
+      });
+
   };
 
   return (
@@ -55,7 +64,7 @@ const Login = () => {
           <div className="input-group">
             <input
               type="text"
-              placeholder="Username"
+              placeholder="Email"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -83,10 +92,24 @@ const Login = () => {
         <div className="additional-options">
           <a href="#forgot" className="forgot-password">Forgot Password?</a>
           <p className="signup-link">
-            New user? <a href="Registration">Create account</a>
+            New user?{' '}
+            <button onClick={() => setShowRegistration(true)} className="modal-trigger">
+              Create account
+            </button>
           </p>
         </div>
       </div>
+
+      {showRegistration && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <button className="close-modal" onClick={() => setShowRegistration(false)}>
+              ✖
+            </button>
+            <Registration />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
