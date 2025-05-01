@@ -20,6 +20,17 @@ const Frontpage = ({ onGetStarted }) => {
     { id: 3, text: 'Short waiting times', rating: '4.7/5' }
   ];
 
+  const senderName = localStorage.getItem('userName') || 'You';
+  const senderRole = localStorage.getItem('userType') || 'patient';
+
+socket.emit('sendMessage', {
+  room,
+  text: inputValue,
+  sender: senderName,
+  role: senderRole
+});
+
+
   const sendMessage = () => {
     if (inputValue.trim()) {
       socket.emit('sendMessage', { room, text: inputValue, sender: 'patient' });
