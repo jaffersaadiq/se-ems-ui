@@ -1,91 +1,202 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './Dashboard_Module.css';
 import Frontpage from './frontpage';
 
 const Dashboard = () => {
   const [showDashboard, setShowDashboard] = useState(false);
-  const [userData, setUserData] = useState({});
+  const [userData, setUserData] = useState({
+    fullName: '',
+    age: '',
+    gender: '',
+    blood: '',
+    emergencyContact: '',
+    allergies: ''
+  });
+  const [medicalHistory, setMedicalHistory] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const handleSaveUserData = (data) => {
-    setUserData(data);
+  const getStoredEmail = () => {
+    return (
+      localStorage.getItem('useremail') ||
+      localStorage.getItem('userEmail') ||
+      localStorage.getItem('email')
+    );
+  };
+
+  useEffect(() => {
+    const userEmail = getStoredEmail();
+    if (!userEmail) {
+      setError('Please login first - no user email found');
+      setLoading(false);
+      return;
+    }
+
+    const fetchUserInfo = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/se-ems/user/byEmail?email=${(userEmail)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('jwtToken')}`
+            }
+          }
+        );
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        const data = await res.json();
+        setUserData(data);
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setError('Failed to load user data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchMedicalHistory = async () => {
+      try {
+        const res = await fetch('http://localhost:8080/se-ems/user/medical/history', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('jwtToken')}`
+          }
+        });
+        if (!res.ok) throw new Error('Failed to fetch medical history');
+        const history = await res.json();
+        setMedicalHistory(history);
+      } catch (err) {
+        console.error('Medical history error:', err);
+      }
+    };
+
+    if (showDashboard) {
+      fetchUserInfo();
+      fetchMedicalHistory();
+    }
+  }, [showDashboard]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setUserData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async () => {
+    const userEmail = getStoredEmail();
+    try {
+      const res = await fetch('http://localhost:8080/se-ems/user/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('jwtToken')}`
+        },
+        body: JSON.stringify({ ...userData, email: userEmail })
+      });
+
+      if (!res.ok) throw new Error('Update failed');
+      setIsEditing(false);
+      alert('Profile updated successfully!');
+    } catch (err) {
+      console.error('Update error:', err);
+      setError('Failed to update profile');
+    }
   };
 
   return (
     <div className="dashboard">
       {!showDashboard ? (
-        <Frontpage
-          onGetStarted={() => setShowDashboard(true)}
-          saveUserData={handleSaveUserData}
-        />
+        <Frontpage onGetStarted={() => setShowDashboard(true)} />
       ) : (
         <div className="dashboard-container">
           <h1>Emergency Medical Service Dashboard</h1>
 
-          {/* Main Rectangle Container */}
-          <div className="dashboard-rectangle">
-            {/* User Details Section */}
-            <div className="section user-details">
-              <h2>User Information</h2>
+          <button 
+             onClick={() => setShowDashboard(false)}
+             className="back-btn"
+             >
+             ← Back to Home
+             </button>
+
+          <button
+            onClick={() => setIsEditing((prev) => !prev)}
+            className="edit-btn"
+          >
+            {isEditing ? 'Cancel' : 'Edit Profile'}
+          </button>
+
+          {error && <div className="error-message">{error}</div>}
+          {loading ? (
+            <p>Loading user data...</p>
+          ) : (
+            <>
               <div className="details-grid">
-                <div className="detail-item">
-                  <label>Full Name:</label>
-                  <p>{userData.fullName || 'John Doe'}</p>
-                </div>
-                <div className="detail-item">
-                  <label>Age:</label>
-                  <p>{userData.age || '32'}</p>
-                </div>
-                <div className="detail-item">
-                  <label>Gender:</label>
-                  <p>{userData.gender || 'Male'}</p>
-                </div>
-                <div className="detail-item">
-                  <label>Blood Group:</label>
-                  <p>{userData.bloodGroup || 'O+'}</p>
-                </div>
-                <div className="detail-item">
-                  <label>Emergency Contact:</label>
-                  <p>{userData.emergencyContact || '+1 555 123 4567'}</p>
-                </div>
-                <div className="detail-item">
-                  <label>Allergies:</label>
-                  <p>{userData.allergies || 'None'}</p>
-                </div>
+                {[
+                  { label: 'Full Name', name: 'fullName' },
+                  { label: 'Age', name: 'age' },
+                  { label: 'Gender', name: 'gender' },
+                  { label: 'Blood Group', name: 'blood' },
+                  { label: 'Emergency Contact', name: 'emergencyContact' },
+                  { label: 'Allergies', name: 'allergies' }
+                ].map(({ label, name }) => (
+                  <div className="detail-item" key={name}>
+                    <label>{label}:</label>
+                    {isEditing ? (
+                      name === 'allergies' ? (
+                        <textarea
+                          name={name}
+                          value={userData[name] || ''}
+                          onChange={handleChange}
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          name={name}
+                          value={userData[name] || ''}
+                          onChange={handleChange}
+                        />
+                      )
+                    ) : (
+                      <p>{userData[name] || 'N/A'}</p>
+                    )}
+                  </div>
+                ))}
               </div>
-            </div>
 
-            {/* Live Chat Section */}
-            <div className="section live-chat">
-              <h2>Live Chat with a Professional</h2>
-              <div className="placeholder">
-                <p>Live chat will appear here.</p>
-              </div>
-            </div>
+              {isEditing && (
+                <button onClick={handleSave} className="submit-button">
+                  Save Changes
+                </button>
+              )}
 
-            {/* Nearby Hospitals Section */}
-            <div className="section nearby-hospitals">
-              <h2>Nearby Hospitals</h2>
-              <div className="placeholder">
-                <p>List of nearby hospitals will appear here.</p>
+              {/* 🏥 Medical History Table */}
+              <div className="medical-history-section">
+                <h2>Medical History</h2>
+                {medicalHistory.length === 0 ? (
+                  <p>No medical history available.</p>
+                ) : (
+                  <table className="medical-history-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Diagnosis</th>
+                        <th>Treatment</th>
+                        <th>Doctor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {medicalHistory.map((entry, idx) => (
+                        <tr key={idx}>
+                          <td>{entry.date}</td>
+                          <td>{entry.diagnosis}</td>
+                          <td>{entry.treatment}</td>
+                          <td>{entry.doctor || 'N/A'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
-            </div>
-
-            {/* Medical History Section */}
-            <div className="section medical-history">
-              <h2>Medical History</h2>
-              <div className="placeholder">
-                <p>Medical history details will appear here.</p>
-              </div>
-            </div>
-
-            {/* Emergency Contacts Section */}
-            <div className="section emergency-contacts">
-              <h2>Emergency Contacts</h2>
-              <div className="placeholder">
-                <p>Emergency contact details will appear here.</p>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       )}
     </div>

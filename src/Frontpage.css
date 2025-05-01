@@ -586,3 +586,26 @@ body.dark-mode .reviews-popup h3 {
   background-color: #e94560;
   color: white;
 }
+
+.zipcode-search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.zipcode-search input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.zipcode-search button {
+  padding: 8px 14px;
+  background-color: #007bff;
+  border: none;
+  color: white;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+}

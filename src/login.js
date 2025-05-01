@@ -31,7 +31,8 @@ const Login = () => {
         return response.json();
       })
       .then(data => {
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("jwtToken", data.token);
+        localStorage.setItem("userEmail", username);
         // Assuming the user type is directly available in the data object
         const { type: userType } = data.user;
         if (userType === 'doctor') {
