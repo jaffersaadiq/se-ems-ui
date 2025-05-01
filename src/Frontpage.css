@@ -603,3 +603,98 @@ body.dark-mode, .dark-mode .frontpage {
 .dark-mode .appointment-details {
   color: #ccc;
 }
+
+/* Stylish Border for Live Chat and Zipcode Sections */
+/* ... [keep all your existing styles above unchanged] ... */
+
+/* Stylish Border for Live Chat and Zipcode Sections */
+.card {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  margin-bottom: 25px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  border: 2px solid #e0eafc; /* Soft border */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
+  border-color: #c3dafe; /* Slightly darker on hover */
+}
+
+/* 🖨️ PRINT-FRIENDLY STYLES */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide UI-only elements */
+  .dark-toggle,
+  .hero-section,
+  .tabs-container,
+  .reviews-popup,
+  .cta-button,
+  .chat-box,
+  .chat-input,
+  .card:has(.chat-box),
+  .hospital-database,
+  .tab,
+  .main-content .card:first-child {
+    display: none !important;
+  }
+
+  /* Show only the hospitals column full-width */
+  .main-content {
+    display: block;
+  }
+
+  .card {
+    border: none;
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Hide input elements */
+  .zipcode-search input,
+  .zipcode-search button {
+    display: none !important;
+  }
+
+  /* Format hospital list */
+  .hospital-list {
+    page-break-inside: avoid;
+  }
+
+  .hospital-item {
+    background: none !important;
+    border: 1px solid #000 !important;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 18px;
+    font-size: 16px;
+  }
+
+  .hospital-item h4 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: black;
+  }
+
+  .hospital-item p {
+    font-size: 14px;
+    margin: 4px 0;
+    color: black;
+  }
+
+  /* Remove print margins */
+  @page {
+    margin: 20mm;
+  }
+}

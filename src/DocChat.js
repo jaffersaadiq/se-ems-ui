@@ -8,19 +8,17 @@ const DoctorChat = () => {
   const room = 'hospital123';
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [prescriptions, setPrescriptions] = useState([]);
-  const [newPrescription, setNewPrescription] = useState('');
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = useState(null); // selected patient
+  const [doctorData, setDoctorData] = useState(null); // logged-in doctor
   const [medicalHistory, setMedicalHistory] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [patientLoading, setPatientLoading] = useState(false);
   const [error, setError] = useState('');
+  const [newDiagnosis, setNewDiagnosis] = useState('');
+  const [newTreatment, setNewTreatment] = useState('');
 
   const getStoredEmail = () => {
-    return localStorage.getItem('useremail') || 
-           localStorage.getItem('userEmail') ||
-           localStorage.getItem('email');
+    return localStorage.getItem('useremail') || localStorage.getItem('userEmail') || localStorage.getItem('email');
   };
 
   useEffect(() => {
@@ -31,8 +29,8 @@ const DoctorChat = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const userEmail = getStoredEmail();
-      if (!userEmail) {
+      const email = getStoredEmail();
+      if (!email) {
         setError('Please login first - no user email found');
         setLoading(false);
         return;
@@ -43,30 +41,15 @@ const DoctorChat = () => {
         const usersRes = await fetch('http://localhost:8080/se-ems/user/all', {
           headers: { Authorization: `Bearer ${localStorage.getItem('jwtToken')}` }
         });
-        
-        if (!usersRes.ok) throw new Error('Failed to load users');
         const usersData = await usersRes.json();
         setAllUsers(usersData);
 
-        // Fetch initial patient data (current user)
-        const userRes = await fetch(
-          `http://localhost:8080/se-ems/user/byEmail?email=${encodeURIComponent(userEmail)}`,
-          { headers: { Authorization: `Bearer ${localStorage.getItem('jwtToken')}` } }
-        );
-
-        if (!userRes.ok) throw new Error('Failed to load user');
-        const userData = await userRes.json();
-        setUserData(userData);
-
-        // Fetch initial medical history
-        const historyRes = await fetch(
-          `http://localhost:8080/se-ems/user/medical/history?userId=${userData.id}`,
-          { headers: { Authorization: `Bearer ${localStorage.getItem('jwtToken')}` } }
-        );
-
-        if (!historyRes.ok) throw new Error('Failed to load medical history');
-        const historyData = await historyRes.json();
-        setMedicalHistory(historyData);
+        // Fetch current logged-in doctor
+        const doctorRes = await fetch(`http://localhost:8080/se-ems/user/byEmail?email=${encodeURIComponent(email)}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('jwtToken')}` }
+        });
+        const doctorData = await doctorRes.json();
+        setDoctorData(doctorData);
 
       } catch (err) {
         setError(err.message || 'Something went wrong');
@@ -80,36 +63,21 @@ const DoctorChat = () => {
 
   const handlePatientClick = async (patient) => {
     try {
-      setPatientLoading(true);
       setError('');
-
-      // Fetch selected patient's data
-      const userRes = await fetch(
-        `http://localhost:8080/se-ems/user/byEmail?email=${encodeURIComponent(patient.email)}`,
-        { headers: { Authorization: `Bearer ${localStorage.getItem('jwtToken')}` } }
-      );
-      
-      if (!userRes.ok) throw new Error('Failed to load patient data');
-      const patientData = await userRes.json();
+      const res = await fetch(`http://localhost:8080/se-ems/user/byEmail?email=${encodeURIComponent(patient.email)}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('jwtToken')}` }
+      });
+      const patientData = await res.json();
       setUserData(patientData);
 
-      // Fetch selected patient's medical history
-      const historyRes = await fetch(
-        `http://localhost:8080/se-ems/user/medical/history?userId=${patientData.id}`,
-        { headers: { Authorization: `Bearer ${localStorage.getItem('jwtToken')}` } }
-      );
-      
-      if (!historyRes.ok) throw new Error('Failed to load medical history');
+      const historyRes = await fetch(`http://localhost:8080/se-ems/user/medical/history?userId=${patientData.id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('jwtToken')}` }
+      });
       const historyData = await historyRes.json();
       setMedicalHistory(historyData);
 
-      // Clear prescriptions when switching patients
-      setPrescriptions([]);
-
     } catch (err) {
       setError(err.message);
-    } finally {
-      setPatientLoading(false);
     }
   };
 
@@ -120,10 +88,32 @@ const DoctorChat = () => {
     }
   };
 
-  const addPrescription = () => {
-    if (newPrescription.trim()) {
-      setPrescriptions(prev => [...prev, newPrescription]);
-      setNewPrescription('');
+  const addPrescription = async () => {
+    if (!newDiagnosis.trim() || !newTreatment.trim() || !userData?.id || !doctorData?.fullName) return;
+
+    try {
+      const res = await fetch('http://localhost:8080/se-ems/user/medical/history', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('jwtToken')}`
+        },
+        body: JSON.stringify({
+          userId: userData.id,
+          diagnosis: newDiagnosis,
+          treatment: newTreatment,
+          doctor: `Dr. ${doctorData.fullName}`,
+          date: new Date().toISOString().split('T')[0]
+        })
+      });
+
+      if (!res.ok) throw new Error('Failed to add medical record');
+      const newEntry = await res.json();
+      setMedicalHistory(prev => [...prev, newEntry]);
+      setNewDiagnosis('');
+      setNewTreatment('');
+    } catch (err) {
+      alert('Error adding record: ' + err.message);
     }
   };
 
@@ -131,99 +121,53 @@ const DoctorChat = () => {
     <div className="doctor-dashboard">
       <div className="sidebar">
         <h2>All Patients</h2>
-        {allUsers.length > 0 ? (
-          allUsers.map(user => (
-            <div 
-              key={user.id} 
-              className={`patient-card ${userData?.id === user.id ? 'active' : ''}`}
-              onClick={() => handlePatientClick(user)}
-            >
-              <h3>{user.fullName}</h3>
-              <p>Age: {user.age}</p>
-              <p>Gender: {user.gender}</p>
-            </div>
-          ))
-        ) : (
-          <p>No patients found</p>
-        )}
+        {allUsers.length > 0 ? allUsers.map(user => (
+          <div key={user.id} className={`patient-card ${userData?.id === user.id ? 'active' : ''}`} onClick={() => handlePatientClick(user)}>
+            <h3>{user.fullName}</h3>
+            <p>Age: {user.age}</p>
+            <p>Gender: {user.gender}</p>
+          </div>
+        )) : <p>No patients found</p>}
       </div>
 
       <div className="main-content">
         <div className="patient-details">
           <h2>Patient Overview</h2>
-
           {loading ? (
-            <p>Loading initial data...</p>
-          ) : patientLoading ? (
-            <p>Loading patient data...</p>
+            <p>Loading data...</p>
           ) : error ? (
             <p className="error-message">{error}</p>
           ) : (
             <div className="detail-card">
-              <div className="vital-stats">
-                <h3>{userData?.fullName || 'No patient selected'}</h3>
-                <div className="stats-grid">
-                  <div className="stat-item">
-                    <span className="stat-label">Blood Group</span>
-                    <span className="stat-value">{userData?.blood || 'N/A'}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Contact</span>
-                    <span className="stat-value">{userData?.emergencyContact || 'N/A'}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Allergies</span>
-                    <span className="stat-value">{userData?.allergies || 'None'}</span>
-                  </div>
-                </div>
+              <h3>{userData?.fullName || 'No patient selected'}</h3>
+              <div className="stats-grid">
+                <div className="stat-item"><strong>Blood Group</strong><div>{userData?.blood || 'N/A'}</div></div>
+                <div className="stat-item"><strong>Contact</strong><div>{userData?.emergencyContact || 'N/A'}</div></div>
+                <div className="stat-item"><strong>Allergies</strong><div>{userData?.allergies || 'None'}</div></div>
               </div>
 
-              <div className="appointment-section">
-                <h3>Medical History</h3>
-                {medicalHistory.length === 0 ? (
-                  <p>No medical records available.</p>
-                ) : (
-                  <table className="medical-history-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Diagnosis</th>
-                        <th>Treatment</th>
-                        <th>Doctor</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {medicalHistory.map((entry, idx) => (
-                        <tr key={idx}>
-                          <td>{entry.date || 'Invalid'}</td>
-                          <td>{entry.diagnosis || '-'}</td>
-                          <td>{entry.treatment || '-'}</td>
-                          <td>{entry.doctor || 'N/A'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-
-              <div className="prescription-section">
-                <h3>Prescriptions</h3>
-                <div className="prescription-input">
-                  <input
-                    type="text"
-                    value={newPrescription}
-                    onChange={(e) => setNewPrescription(e.target.value)}
-                    placeholder="Add new prescription..."
-                  />
-                  <button onClick={addPrescription}>Add</button>
-                </div>
-                <div className="prescription-list">
-                  {prescriptions.map((prescription, index) => (
-                    <div key={index} className="prescription-item">
-                      ✓ {prescription}
-                    </div>
+              <h3>Medical History</h3>
+              <table className="medical-history-table">
+                <thead>
+                  <tr><th>Date</th><th>Diagnosis</th><th>Treatment</th><th>Doctor</th></tr>
+                </thead>
+                <tbody>
+                  {medicalHistory.map((entry, idx) => (
+                    <tr key={idx}>
+                      <td>{entry.date || 'N/A'}</td>
+                      <td>{entry.diagnosis}</td>
+                      <td>{entry.treatment}</td>
+                      <td>{entry.doctor}</td>
+                    </tr>
                   ))}
-                </div>
+                </tbody>
+              </table>
+
+              <h3>Add Medical Record</h3>
+              <div className="prescription-input">
+                <input type="text" value={newDiagnosis} onChange={(e) => setNewDiagnosis(e.target.value)} placeholder="Diagnosis" />
+                <input type="text" value={newTreatment} onChange={(e) => setNewTreatment(e.target.value)} placeholder="Treatment" />
+                <button onClick={addPrescription}>Add</button>
               </div>
             </div>
           )}
@@ -236,7 +180,7 @@ const DoctorChat = () => {
               {messages.map((msg, index) => (
                 <div key={index} className={`message-wrapper ${msg.sender === 'doctor' ? 'right' : 'left'}`}>
                   <div className={`message ${msg.sender === 'doctor' ? 'doctor' : 'patient'}`}>
-                    <strong>{msg.sender === 'doctor' ? 'You' : 'Patient'}:</strong> {msg.text}
+                  <strong>{msg.sender === 'doctor' ? 'You' : (!userData?.fullName || 'Patient')}:</strong> {msg.text}
                   </div>
                   <small className="timestamp">{new Date().toLocaleTimeString()}</small>
                 </div>

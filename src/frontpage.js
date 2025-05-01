@@ -10,11 +10,10 @@ const Frontpage = ({ onGetStarted }) => {
   const [activeTab, setActiveTab] = useState('Instructions');
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
-  const [zipcode, setZipcode] = useState('02115');
+  const [zipcode, setZipcode] = useState('');
   const [hospitals, setHospitals] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
   const [showReviewsPopup, setShowReviewsPopup] = useState(false);
-
   const [aiInput, setAiInput] = useState('');
   const [aiMessages, setAiMessages] = useState([]);
   const [error, setError] = useState(null);
@@ -47,15 +46,15 @@ const Frontpage = ({ onGetStarted }) => {
       const response = await axios.post(
         'https://api.openai.com/v1/chat/completions',
         {
-          model: 'gpt-3.5-turbo', // or 'gpt-4o' if you're using GPT-4 Omni
+          model: 'gpt-3.5-turbo',
           messages: updatedMessages,
           temperature: 0.7,
           max_tokens: 150,
-          stream: false // Optional - enable if handling stream response
+          stream: false
         },
         {
           headers: {
-            Authorization: `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
+            Authorization: `Bearer ${'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'}`,
             'Content-Type': 'application/json'
           }
         }
@@ -70,12 +69,39 @@ const Frontpage = ({ onGetStarted }) => {
       setError(
         err?.response?.data?.error?.message || 'AI assistant is currently unavailable.'
       );
-      setAiMessages(prev => prev.slice(0, -1)); // Remove optimistic user message
+      setAiMessages(prev => prev.slice(0, -1));
     } finally {
       setLoading(false);
     }
   };
+
+  const fetchHospitalsByZip = async (zip) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/se-ems/hospital/zip?zip=${zip}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('jwtToken')}`,
+          }
+        }
+      );
+      return response.data.map((hospital) => ({
+        name: hospital.name,
+        specialty: hospital.naicsDesc,
+        address: hospital.address
+      }));
+    } catch (error) {
+      console.error('Error fetching hospitals:', error);
+      alert('Failed to fetch hospitals. Please try again.');
+      return [];
+    }
+  };
   
+  const handleHospitalSearch = async () => {
+    if (!zipcode.trim()) return alert('Please enter a valid zipcode.');
+    const results = await fetchHospitalsByZip(zipcode);
+    setHospitals(results);
+  };
 
   useEffect(() => {
     socket.emit('joinRoom', { room });
@@ -87,26 +113,6 @@ const Frontpage = ({ onGetStarted }) => {
     document.body.classList.toggle('dark-mode', darkMode);
     document.documentElement.classList.toggle('dark-mode', darkMode);
   }, [darkMode]);
-
-  useEffect(() => {
-    setHospitals([
-      {
-        name: 'Mass General Hospital',
-        specialty: 'Cardiology, Neurology',
-        status: 'online'
-      },
-      {
-        name: 'Beth Israel Deaconess',
-        specialty: 'Emergency & Trauma',
-        status: 'offline'
-      },
-      {
-        name: "Boston Children's Hospital",
-        specialty: 'Pediatrics',
-        status: 'online'
-      }
-    ]);
-  }, []);
 
   return (
     <div className="frontpage">
@@ -276,15 +282,14 @@ const Frontpage = ({ onGetStarted }) => {
           <h2>Live Chat with a Professional</h2>
           <div className="chat-box">
             <div className="chat-window">
-            {messages.map((msg, index) => (
-  <div key={index} className={`message-wrapper ${msg.sender === 'doctor' ? 'right' : 'left'}`}>
-    <div className={`message ${msg.sender === 'doctor' ? 'doctor' : 'patient'}`}>
-      <strong>{msg.sender === 'doctor' ? 'Doctor' : 'You'}:</strong> {msg.text}
-    </div>
-    <small className="timestamp">{new Date().toLocaleTimeString()}</small>
-  </div>
-))}
-
+              {messages.map((msg, index) => (
+                <div key={index} className={`message-wrapper ${msg.sender === 'doctor' ? 'right' : 'left'}`}>
+                  <div className={`message ${msg.sender === 'doctor' ? 'doctor' : 'patient'}`}>
+                    <strong>{msg.sender === 'doctor' ? 'Doctor' : 'You'}:</strong> {msg.text}
+                  </div>
+                  <small className="timestamp">{new Date().toLocaleTimeString()}</small>
+                </div>
+              ))}
             </div>
             <div className="chat-input">
               <input
@@ -308,28 +313,7 @@ const Frontpage = ({ onGetStarted }) => {
               value={zipcode}
               onChange={(e) => setZipcode(e.target.value)}
             />
-            <button
-              onClick={() => {
-                if (!zipcode.trim()) return alert('Please enter a valid zipcode.');
-                setHospitals([
-                  {
-                    name: 'Mass General Hospital',
-                    specialty: 'Cardiology, Neurology',
-                    status: 'online'
-                  },
-                  {
-                    name: 'Beth Israel Deaconess',
-                    specialty: 'Emergency & Trauma',
-                    status: 'offline'
-                  },
-                  {
-                    name: "Boston Children's Hospital",
-                    specialty: 'Pediatrics',
-                    status: 'online'
-                  }
-                ]);
-              }}
-            >
+            <button onClick={handleHospitalSearch}>
               Search
             </button>
           </div>
@@ -337,39 +321,34 @@ const Frontpage = ({ onGetStarted }) => {
           <div className="hospital-list">
             {hospitals.length > 0 ? (
               hospitals.map((hospital, index) => (
-                <div className={`hospital-item ${hospital.status}`} key={index}>
+                <div className="hospital-item" key={index}>
                   <h4>{hospital.name}</h4>
+                  <p><strong>Address:</strong> {hospital.address}</p>
                   <p><strong>Specialty:</strong> {hospital.specialty}</p>
-                  <p>
-                    <strong>Status:</strong>{' '}
-                    <span style={{ color: hospital.status === 'online' ? 'green' : 'red' }}>
-                      {hospital.status.toUpperCase()}
-                    </span>
-                  </p>
                 </div>
               ))
             ) : (
               <p className="placeholder">Enter a zipcode to see nearby hospitals.</p>
             )}
           </div>
-          <div className="card hospital-database">
-  <h2>All Registered Hospitals</h2>
-  <p style={{ marginBottom: '15px' }}>
-    This section will display data from a database or CSV file.
-  </p>
-  <div className="hospital-table">
-    <div className="table-header">
-      <div>Hospital Name</div>
-      <div>Hospital Review</div>
-      <div>Location</div>
-      <div>Status</div>
-    </div>
-    <div className="table-placeholder">
-      <p>📄 Data will appear here after integration.</p>
-    </div>
-  </div>
-</div>
 
+          <div className="card hospital-database">
+            <h2>All Registered Hospitals</h2>
+            <p style={{ marginBottom: '15px' }}>
+              This section will display data from a database or CSV file.
+            </p>
+            <div className="hospital-table">
+              <div className="table-header">
+                <div>Hospital Name</div>
+                <div>Hospital Review</div>
+                <div>Location</div>
+                <div>Status</div>
+              </div>
+              <div className="table-placeholder">
+                <p>📄 Data will appear here after integration.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
