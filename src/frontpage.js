@@ -44,25 +44,21 @@ const Frontpage = ({ onGetStarted }) => {
   
     try {
       const response = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
+        'http://localhost:8080/se-ems/assistant',
         {
-          model: 'gpt-3.5-turbo',
-          messages: updatedMessages,
-          temperature: 0.7,
-          max_tokens: 150,
-          stream: false
+          message: aiInput
         },
         {
           headers: {
-            Authorization: `Bearer ${'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'}`,
             'Content-Type': 'application/json'
           }
         }
       );
   
-      const aiMessage = response.data.choices?.[0]?.message;
-      if (!aiMessage) throw new Error('No message returned from AI');
+      const aiMessageText = response.data.response;
+      if (!aiMessageText) throw new Error('No message returned from AI');
   
+      const aiMessage = { role: 'assistant', content: aiMessageText };
       setAiMessages(prev => [...prev, aiMessage]);
     } catch (err) {
       console.error('AI error:', err);
@@ -74,6 +70,7 @@ const Frontpage = ({ onGetStarted }) => {
       setLoading(false);
     }
   };
+  
 
   const fetchHospitalsByZip = async (zip) => {
     try {
@@ -151,7 +148,7 @@ const Frontpage = ({ onGetStarted }) => {
             className={`tab ${activeTab === 'Assistant' ? 'active' : ''}`}
             onClick={() => setActiveTab('Assistant')}
           >
-            AI Assistant
+            Dr.Assistant(AI)
           </button>
         </div>
 
@@ -232,7 +229,7 @@ const Frontpage = ({ onGetStarted }) => {
 
           {activeTab === 'Assistant' && (
             <div className="content">
-              <h2>AI Assistant</h2>
+              <h2>Dr.Assistant (AI)</h2>
               {error && <div className="error-message">{error}</div>}
               <div className="chat-box">
                 <div className="chat-window">

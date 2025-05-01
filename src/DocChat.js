@@ -180,7 +180,7 @@ const DoctorChat = () => {
               {messages.map((msg, index) => (
                 <div key={index} className={`message-wrapper ${msg.sender === 'doctor' ? 'right' : 'left'}`}>
                   <div className={`message ${msg.sender === 'doctor' ? 'doctor' : 'patient'}`}>
-                  <strong>{msg.sender === 'doctor' ? 'You' : (!userData?.fullName || 'Patient')}:</strong> {msg.text}
+                  <strong>{msg.sender === 'doctor' ? 'You' : (userData?.fullName || 'Patient')}:</strong> {msg.text}
                   </div>
                   <small className="timestamp">{new Date().toLocaleTimeString()}</small>
                 </div>
